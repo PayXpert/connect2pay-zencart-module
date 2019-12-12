@@ -5,6 +5,7 @@ The author of this plugin can NEVER be held responsible for this software.
 There is no warrenty what so ever. You accept this by using this software.
 
 ## Changelog
+* 1.0.1 - Bug fixes
 * 1.0.0 - Initial Release
 
 ## Installation

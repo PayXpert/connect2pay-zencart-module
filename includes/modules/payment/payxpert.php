@@ -5,9 +5,9 @@
  * PHP dependencies:
  * PHP >= 5.2.0
  *
- * @version 1.0 (20180308)
+ * @version 1.0.1 (20191212)
  * @author Heitor Dolinski
- * @copyright 2018 PayXpert
+ * @copyright 2019 PayXpert
  *
  */ 
 
@@ -18,7 +18,7 @@ class payxpert extends base {
     function payxpert() {
       global $order;
 
-      $this->signature = 'payxpert|1.0|20180308';
+      $this->signature = 'payxpert|1.0.1|20191212';
 
       $this->code = 'payxpert';
       $this->title = MODULE_PAYMENT_PAYXPERT_TEXT_TITLE;
@@ -91,9 +91,8 @@ class payxpert extends base {
     function after_process() {
       global $db, $order, $insert_id, $customer_id, $messageStack;
 
-      include('connect2pay/Connect2PayClient.php');
+      require(dirname(__FILE__) . '/connect2pay/Connect2PayClient.php');
       
-      $db->Execute("update " . TABLE_ORDERS . " set orders_status = 2 where orders_id = " . intval($insert_id));
       $order->info['payment_method'] = 'PayXpert';
       $order->info['payment_module_code'] = 'payxpert';
 
@@ -107,7 +106,7 @@ class payxpert extends base {
       // Setup parameters
       $c2pClient->setOrderID($insert_id);
       $c2pClient->setCustomerIP($_SERVER["REMOTE_ADDR"]);
-      $c2pClient->setPaymentType(PayXpert\Connect2Pay\Connect2PayClient::_PAYMENT_TYPE_CREDITCARD);
+      $c2pClient->setPaymentMethod(PayXpert\Connect2Pay\Connect2PayClient::_PAYMENT_TYPE_CREDITCARD);
       $c2pClient->setPaymentMode(PayXpert\Connect2Pay\Connect2PayClient::_PAYMENT_MODE_SINGLE);
       $c2pClient->setShopperID($customer_id);
       $c2pClient->setCtrlCustomData($customer_id);
@@ -141,14 +140,15 @@ class payxpert extends base {
           // if setup is correct redirect to the payment page.
           zen_redirect($c2pClient->getCustomerRedirectURL());
         } else {
+          // var_dump($c2pClient);
           $payment_error_return = 'payment_error=' . "error";
-          $messageStack->add_session('checkout_payment', "Transaction status: " . $status->getStatus() . " (Error code: " . $errorCode . ")");
+          $messageStack->add_session('checkout_payment', "Error while processing: " . $c2pClient->getClientErrorMessage());
           zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return, 'SSL', true, false));
         }
         // return false;
       } else {
         $payment_error_return = 'payment_error=' . "error";
-        $messageStack->add_session('checkout_payment', "Transaction status: " . $status->getStatus() . " (Error code: " . $errorCode . ")");
+        $messageStack->add_session('checkout_payment', "Error while processing: " . $c2pClient->getClientErrorMessage());
         zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return, 'SSL', true, false));
       }
     }
